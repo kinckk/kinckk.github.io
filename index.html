@@ -210,12 +210,12 @@
                 icon.innerText = '🎉';
                 title.innerText = '答對了！';
                 title.className = 'text-4xl font-black mb-2 text-green-400';
-                desc.innerText = currentImageType === 'T' ? '好眼力！這確實是真實的相片。' : '沒錯！這是 AI 生成的相片。';
+                desc.innerText = currentImageType === 'T' ? '這確實是真實的相片。' : '這是 AI 生成的相片。';
             } else {
                 icon.innerText = '🤖';
                 title.innerText = '答錯了！';
                 title.className = 'text-4xl font-black mb-2 text-red-400';
-                desc.innerText = currentImageType === 'T' ? '哎呀！其實這是一張真實的相片喔。' : '被騙了吧！這張其實是 AI 生成的相片。';
+                desc.innerText = currentImageType === 'T' ? '其實這是一張真實的相片。' : '這張其實是 AI 生成的相片。';
             }
 
             modal.classList.remove('hidden');
