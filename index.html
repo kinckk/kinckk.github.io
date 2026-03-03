@@ -1,66 +1,257 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="zh-HK">
 <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Capybara</title>
-    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"> -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,700" rel="stylesheet">
-    <!-- Bulma Version 0.9.0-->
-    <link rel="stylesheet" href="https://unpkg.com/bulma@0.9.0/css/bulma.min.css" />
-    <link rel="stylesheet" type="text/css" href="./css/style.css">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STEAM Week - 分辨真假相片</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #111827;
+            background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 20px 20px;
+            color: #f3f4f6;
+        }
+
+        .image-card {
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .image-card:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+
+        .selected {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.3) !important;
+            transform: scale(1.02);
+        }
+
+        /* Modal Animation */
+        .modal-enter {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes popIn {
+            0% { opacity: 0; transform: scale(0.8) translate(-50%, -50%); }
+            100% { opacity: 1; transform: scale(1) translate(-50%, -50%); }
+        }
+    </style>
 </head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-<body style="background-color: #000;">
-    <section class="index hero is-info is-fullheight animate__animated animate__fadeIn animate__slower">
-        <div class="hero-head">
-            <nav class="navbar is-warning" style="opacity:0.8">
-                <div class="container">
-                    <div class="navbar-brand">
-                        <a class="navbar-item" href="./index.html">
-                            <img src="./images/logo.png" alt="Logo">
-                        </a>
-                        <a role="button" class="navbar-burger" data-target="navMenu" aria-label="menu" aria-expanded="false">
-                          <span aria-hidden="true"></span>
-                          <span aria-hidden="true"></span>
-                          <span aria-hidden="true"></span>
-                        </a>
-                    </div>
-                    <div class="navbar-menu" id="navMenu">
-                      <div class="navbar-start"  style="color:#fff">
-                          <a class="navbar-item" href="./about.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">About</a>
-                          <a class="navbar-item" href="./friendliest.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">Friendliest</a>
-                          <a class="navbar-item" href="./meet.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">Meet</a>
-                          <a class="navbar-item" href="./event.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">Event</a>
-                          <a class="navbar-item" href="./quiz.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">Quiz</a>
-                          <a class="navbar-item" href="./faq.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">FAQ</a>
-                          <a class="navbar-item" href="./photo.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">Photo</a>
-                          <a class="navbar-item" href="./contact.html" onMouseOver="this.style.color='#000'" onMouseOut="this.style.color='#fff'">Contact</a>
-                      </div>                
-                    </div>
-                </div>
-            </nav>
-            </div>
+    <!-- Game Area -->
+    <!-- 修改了這裡：增加 maxWidth 讓整體遊戲區域更大，並稍微減少 padding 以獲取更多空間顯示照片 -->
+    <div class="w-full max-w-5xl p-4 md:p-6 flex flex-col items-center flex-grow justify-center">
+        
+        <!-- Center Image -->
+        <!-- 修改了這裡：移除 max-w-[500px] 的限制，改為 w-full，同時設定 max-h-[70vh] 確保在較低解析度螢幕或行動裝置上也不會把按鈕擠出畫面 -->
+        <div class="relative w-full aspect-square md:aspect-auto md:max-h-[65vh] md:h-[600px] rounded-2xl overflow-hidden flex items-center justify-center mb-6 bg-gray-900 border-4 border-gray-800 shadow-inner">
+            <div id="loading-spinner" class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+            <!-- object-contain 確保相片放大時比例正確且不被裁切 -->
+            <img id="main-img" src="" alt="題目相片" class="w-full h-full object-contain hidden" onload="this.classList.remove('hidden'); document.getElementById('loading-spinner').classList.add('hidden');">
+            <div id="fallback-msg" class="absolute inset-0 flex items-center justify-center text-gray-500 text-lg font-bold text-center p-4 hidden"></div>
+        </div>
 
-            <div class="hero-body">
-                <div class="container has-text-centered">
-                    <div class="column is-6 is-offset-3">
-                        <h1 class="title animate__animated animate__fadeIn animate__delay-1s">
-                            Capybara
-                        </h1>
-                        <h2 class="subtitle animate__animated animate__fadeIn animate__delay-2s">
-                            The Largest Rodent In The World
-                        </h2>
-                    </div>
-                </div>
-            </div>
+        <!-- Choice Buttons -->
+        <!-- 修改了這裡：增加按鈕區域的寬度 -->
+        <div class="flex flex-row gap-4 w-full max-w-2xl justify-center mb-8">
+            <button id="choice-t" onclick="selectChoice('T')" class="flex-1 py-4 px-2 rounded-2xl border-4 border-gray-700 bg-gray-800 text-gray-200 font-bold text-xl md:text-2xl transition-all hover:bg-gray-700 hover:border-blue-500 shadow-sm">
+                📸 真實相片
+            </button>
+            <button id="choice-f" onclick="selectChoice('F')" class="flex-1 py-4 px-2 rounded-2xl border-4 border-gray-700 bg-gray-800 text-gray-200 font-bold text-xl md:text-2xl transition-all hover:bg-gray-700 hover:border-purple-500 shadow-sm">
+                🤖 AI 生成
+            </button>
+        </div>
 
-    </section>
-    <script async type="text/javascript" src="./js/bulma.js"></script>
+        <!-- Confirm Button -->
+        <button id="btn-confirm" onclick="checkAnswer()" disabled
+            class="bg-gray-800 text-gray-500 font-bold text-2xl py-4 px-16 rounded-full cursor-not-allowed transition-colors duration-300">
+            請先選擇答案
+        </button>
+    </div>
+
+    <!-- Result Modal (Hidden by default) -->
+    <div id="result-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center backdrop-blur-sm">
+        <div id="modal-content" class="bg-gray-900 border border-gray-700 rounded-3xl p-10 text-center max-w-md w-[90%] absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 shadow-2xl">
+            <div id="result-icon" class="text-8xl mb-4">✅</div>
+            <h2 id="result-title" class="text-4xl font-black mb-2 text-white">答對了！</h2>
+            <p id="result-desc" class="text-xl text-gray-400 mb-8">你成功找出了真實的相片！</p>
+            <button onclick="nextQuestion()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-2xl py-3 px-12 rounded-full transition-colors w-full shadow-lg active:scale-95">
+                下一題
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 遊戲設定區 (老師可在此修改設定)
+         */
+        const CONFIG = {
+            totalImages: 48,      // 你的 photo 資料夾裡總共有幾張照片？(例如: 10 代表 0001 到 0010)
+            imageFolder: 'photo', // 存放照片的資料夾名稱
+            extension: '.jpg',    // 照片的副檔名 (例如: .jpg, .png, .jpeg)
+        };
+
+        // 遊戲狀態變數
+        let availableQuestions = [];
+        let currentImageId = '';
+        let currentImageType = ''; // 'T' (真實) 或 'F' (AI)
+        let selectedChoice = null; // 'T' 或 'F'
+
+        // 初始化可用題目陣列
+        function initQuestions() {
+            availableQuestions = [];
+            for (let i = 1; i <= CONFIG.totalImages; i++) {
+                // 將數字轉為 4 位數格式，例如 1 -> "0001"
+                availableQuestions.push(String(i).padStart(4, '0'));
+            }
+            // 打亂題目順序
+            availableQuestions.sort(() => Math.random() - 0.5);
+        }
+
+        // 載入下一題
+        function nextQuestion() {
+            // 如果題目用完了，重新洗牌
+            if (availableQuestions.length === 0) {
+                initQuestions();
+            }
+
+            // 取出下一題 ID
+            currentImageId = availableQuestions.pop();
+            
+            // 重置 UI
+            resetUI();
+
+            // 顯示載入中動畫
+            document.getElementById('loading-spinner').classList.remove('hidden');
+
+            // 產生可能的檔案路徑
+            const tPath = `${CONFIG.imageFolder}/${currentImageId}_T${CONFIG.extension}`;
+            const fPath = `${CONFIG.imageFolder}/${currentImageId}_F${CONFIG.extension}`;
+
+            // 自動偵測圖片是否存在來決定它是 T 還是 F
+            // 修改了這裡：處理 404 錯誤，避免 console 顯示錯誤
+            let imgTester = new Image();
+            imgTester.onload = () => {
+                currentImageType = 'T';
+                document.getElementById('main-img').src = tPath;
+            };
+            imgTester.onerror = () => {
+                // 如果找不到 _T，嘗試找 _F
+                let imgTesterF = new Image();
+                imgTesterF.onload = () => {
+                    currentImageType = 'F';
+                    document.getElementById('main-img').src = fPath;
+                };
+                imgTesterF.onerror = () => {
+                    // 兩個都找不到，顯示錯誤訊息
+                    document.getElementById('loading-spinner').classList.add('hidden');
+                    const fallbackDiv = document.getElementById('fallback-msg');
+                    fallbackDiv.classList.remove('hidden');
+                    fallbackDiv.innerHTML = `找不到圖片<br><span class="text-sm text-red-400 font-normal mt-2 block">請確認<br>${currentImageId}_T${CONFIG.extension}<br>或<br>${currentImageId}_F${CONFIG.extension}<br>存在</span>`;
+                };
+                imgTesterF.src = fPath;
+            };
+            imgTester.src = tPath;
+
+            // 隱藏 Modal
+            document.getElementById('result-modal').classList.add('hidden');
+            document.getElementById('modal-content').classList.remove('modal-enter');
+        }
+
+        // 玩家點擊選項
+        function selectChoice(choice) {
+            selectedChoice = choice;
+
+            // 重置按鈕樣式
+            document.getElementById('choice-t').classList.remove('border-blue-500', 'bg-blue-900/50', 'text-blue-300', 'scale-105');
+            document.getElementById('choice-t').classList.add('border-gray-700', 'bg-gray-800', 'text-gray-200'); // 確保還原為預設顏色
+            
+            document.getElementById('choice-f').classList.remove('border-purple-500', 'bg-purple-900/50', 'text-purple-300', 'scale-105');
+            document.getElementById('choice-f').classList.add('border-gray-700', 'bg-gray-800', 'text-gray-200'); // 確保還原為預設顏色
+            
+            // 套用選取樣式
+            const selectedBtn = document.getElementById(`choice-${choice.toLowerCase()}`);
+            if (choice === 'T') {
+                selectedBtn.classList.remove('border-gray-700', 'bg-gray-800', 'text-gray-200'); // 移除預設顏色
+                selectedBtn.classList.add('border-blue-500', 'bg-blue-900/50', 'text-blue-300', 'scale-105');
+            } else {
+                selectedBtn.classList.remove('border-gray-700', 'bg-gray-800', 'text-gray-200'); // 移除預設顏色
+                selectedBtn.classList.add('border-purple-500', 'bg-purple-900/50', 'text-purple-300', 'scale-105');
+            }
+
+            // 啟用確認按鈕
+            const btn = document.getElementById('btn-confirm');
+            btn.disabled = false;
+            btn.classList.remove('bg-gray-800', 'text-gray-500', 'cursor-not-allowed');
+            btn.classList.add('bg-blue-600', 'hover:bg-blue-500', 'text-white', 'shadow-lg');
+            btn.innerText = '確認答案';
+        }
+
+        // 確認答案
+        function checkAnswer() {
+            if (!selectedChoice) return;
+
+            const isCorrect = selectedChoice === currentImageType;
+            
+            const modal = document.getElementById('result-modal');
+            const modalContent = document.getElementById('modal-content');
+            const icon = document.getElementById('result-icon');
+            const title = document.getElementById('result-title');
+            const desc = document.getElementById('result-desc');
+
+            if (isCorrect) {
+                icon.innerText = '🎉';
+                title.innerText = '答對了！';
+                title.className = 'text-4xl font-black mb-2 text-green-400';
+                desc.innerText = currentImageType === 'T' ? '好眼力！這確實是真實的相片。' : '沒錯！這是 AI 生成的相片。';
+            } else {
+                icon.innerText = '🤖';
+                title.innerText = '答錯了！';
+                title.className = 'text-4xl font-black mb-2 text-red-400';
+                desc.innerText = currentImageType === 'T' ? '哎呀！其實這是一張真實的相片喔。' : '被騙了吧！這張其實是 AI 生成的相片。';
+            }
+
+            modal.classList.remove('hidden');
+            // 觸發動畫重置
+            void modalContent.offsetWidth; 
+            modalContent.classList.add('modal-enter');
+        }
+
+        // 重置 UI 狀態
+        function resetUI() {
+            selectedChoice = null;
+            
+            // 恢復選項按鈕樣式
+            document.getElementById('choice-t').className = 'flex-1 py-4 px-2 rounded-2xl border-4 border-gray-700 bg-gray-800 text-gray-200 font-bold text-xl md:text-2xl transition-all hover:bg-gray-700 hover:border-blue-500 shadow-sm';
+            document.getElementById('choice-f').className = 'flex-1 py-4 px-2 rounded-2xl border-4 border-gray-700 bg-gray-800 text-gray-200 font-bold text-xl md:text-2xl transition-all hover:bg-gray-700 hover:border-purple-500 shadow-sm';
+            
+            // 隱藏 fallback 訊息
+            document.getElementById('fallback-msg').classList.add('hidden');
+
+            // 讓圖片預設隱藏直到載入完成
+            document.getElementById('main-img').classList.add('hidden');
+            document.getElementById('main-img').src = '';
+
+            // 重置確認按鈕
+            const btn = document.getElementById('btn-confirm');
+            btn.disabled = true;
+            btn.classList.add('bg-gray-800', 'text-gray-500', 'cursor-not-allowed');
+            btn.classList.remove('bg-blue-600', 'hover:bg-blue-500', 'text-white', 'shadow-lg');
+            btn.innerText = '請先選擇答案';
+        }
+
+        // 網頁載入後馬上開始第一題
+        window.onload = () => {
+            initQuestions();
+            nextQuestion();
+        };
+    </script>
 </body>
-
 </html>
